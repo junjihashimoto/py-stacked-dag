@@ -1,4 +1,4 @@
-# typedtensor
+# stacked-dag for python
 
 [![Build Status](https://travis-ci.org/junjihashimoto/py-stacked-dag.png?branch=master)](https://travis-ci.org/junjihashimoto/py-stacked-dag)
 
@@ -53,3 +53,25 @@ o    l2
 o    l3
 ```
 
+
+# Samples
+
+```
+$ python stackeddag.py sample/test.dot
+o
+|
+o
+|\
+o |
+| |\
+o o |
+|\ \ \
+| | |\ \
+| | | | |\
+o o o o o |
+|/ /_/ / /
+| |  / /
+o o o o
+|/_/_/
+o
+```

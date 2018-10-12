@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from enum import Enum
 from functools import reduce
 import pydot
