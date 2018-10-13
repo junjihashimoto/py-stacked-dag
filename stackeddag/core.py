@@ -1,8 +1,5 @@
-#!/usr/bin/python
 from enum import Enum
 from functools import reduce
-import pydot
-import sys
 
 class SEnum(Enum):
   SNode = 0
@@ -733,26 +730,3 @@ def getLongestCommonPrefix(strs):
           return strs[0][0:i]
     return strs[0]
 
-def main ():
-  argv = sys.argv
-  argc = len(argv)
-  if (argc != 2):
-    print(f'Usage: python {argv[0]} arg1')
-    quit()
-  dot_file = argv[1]
-  v = pydot.graph_from_dot_file(dot_file)
-  g = v[0]
-  edges = g.get_edges()
-  nodes = g.get_nodes()
-  la = []
-  for i in nodes:
-    attr = i.get_attributes()
-    if 'label' in attr:
-      la.append((i.get_name(),attr['label'][1:-1]))
-  ed = []
-  for i in edges:
-    ed.append((i.get_source(),[i.get_destination()]))
-  print(edgesToText(mkLabels(la),mkEdges(ed)),end="")
-
-if __name__ == '__main__':
-  main()
