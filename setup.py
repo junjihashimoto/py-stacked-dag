@@ -3,8 +3,8 @@ from setuptools import setup, find_packages
 import os
 long_description = 'Ascii DAG for visualization of dataflow'
 
-if os.path.exists('README'):
-  long_description = open('README').read()
+if os.path.exists('README.md'):
+  long_description = open('README.md').read()
 
 setup(
   name = "stackeddag",
