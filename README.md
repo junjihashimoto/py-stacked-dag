@@ -21,7 +21,7 @@ o    l2
 o    l3
 ```
 
-# Usages
+# Usage with dot
 
 Write a Dot file of graphviz.
 
@@ -53,8 +53,31 @@ o    l2
 o    l3
 ```
 
+# Usage with tensorflow
 
-# Samples
+```
+import tensorflow as tf
+import stackeddag.tf as sd
+
+def mydataflow():
+  a = tf.constant(1,name="a")
+  b = tf.constant(2,name="b")
+  c = tf.add(a,b,name="c")
+  return tf.get_default_graph()
+
+print(sd.fromGraph(mydataflow()),end="")
+```
+
+The output is below.
+
+```
+o o    a,b
+|/
+o    c
+```
+
+
+# Another sample
 
 ```
 $ python stackeddag.py sample/test.dot
@@ -75,3 +98,4 @@ o o o o
 |/_/_/
 o
 ```
+

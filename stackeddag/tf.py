@@ -1,4 +1,5 @@
 import stackeddag.core as sd
+import re
 
 def fromGraph(graph):
   graphdef = graph.as_graph_def()
