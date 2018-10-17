@@ -1,8 +1,14 @@
-from typing import Callable, TypeVar, List
+from typing import Callable, TypeVar, List, Dict, Tuple, Set, Iterator, Optional
 from enum import Enum
 from functools import reduce
 
 T = TypeVar('T')
+Labels = Dict[T, str]
+Edges = Dict[T, Set[T]]
+NodeDepth = Dict[T, int]
+DepthGroup = Dict[int, List[T]]
+DepthGroupWithSkip = Dict[int, Tuple[List[T], List[T]]]
+DepthGroupWithDest = Dict[int, Tuple[List[Tuple[T, int, int]], List[Tuple[T, int, int]]]]
 
 class SEnum(Enum):
     SNode = 0
@@ -115,16 +121,22 @@ def groupby(fn: Callable[[T, T], bool], lists: List[T]) -> List[List[T]]:
     r.append(buf)
     return r
 
-def mkEdges(list_of_edges):
+def iconcat(list_of_list: Iterator[List[T]]) -> List[T]:
+    return sum(list_of_list, [])
+
+def concat(list_of_list: List[List[T]]) -> List[T]:
+    return sum(list_of_list, [])
+
+def mkEdges(list_of_edges: List[Tuple[T, List[T]]]) -> Edges[T]:
     """
     >>> sorted(mkEdges([(0,[2]),(1,[2]),(2,[3]),(4,[3]),(6,[3]),(3,[5])]).items())
     [(0, {2}), (1, {2}), (2, {3}), (3, {5}), (4, {3}), (6, {3})]
     """
     g = groupby(lambda x, y: x[0] == y[0], sorted(list_of_edges))
-    m = map(lambda x: (x[0][0], set(sum(map(lambda y: y[1], x), []))), g)
+    m = map(lambda x: (x[0][0], set(iconcat(map(lambda y: y[1], x)))), g)
     return dict(m)
 
-def mkLabels(list_of_labels):
+def mkLabels(list_of_labels: List[Tuple[T, str]]) -> Labels[T]:
     """
     >>> sorted(mkLabels([(0,"l0"),(1,"l1"),(2,"l2"),(3,"l3"),(5,"l5"),(4,"l4"),(6,"l6")]).items())
     [(0, 'l0'), (1, 'l1'), (2, 'l2'), (3, 'l3'), (4, 'l4'), (5, 'l5'), (6, 'l6')]
@@ -152,7 +164,7 @@ samplelabels = mkLabels([
 ])
 
 
-def _getDepth2(edges, dmap, v):
+def _getDepth2(edges: Edges[T], dmap: NodeDepth[T], v: T) -> int:
     if v in dmap:
         return dmap[v]
     else:
@@ -164,36 +176,36 @@ def _getDepth2(edges, dmap, v):
             dmap[v] = 0
             return 0
 
-def getNodes(edges):
+def getNodes(edges: Edges[T]) -> Set[T]:
     """
     >>> getNodes(mkEdges([(0,[2]),(1,[2]),(2,[3]),(4,[3]),(6,[3])]))
     {0, 1, 2, 3, 4, 6}
     """
     parents = map(lambda x: x[0], edges.items())
-    children = sum(map(lambda x: list(x[1]), edges.items()), [])
+    children = iconcat(map(lambda x: list(x[1]), edges.items()))
     r = list(parents)
     r.extend(children)
     return set(r)
 
-def getDepth2(edges):
+def getDepth2(edges: Edges[T]) -> NodeDepth[T]:
     """
     >>> sorted(getDepth2(sampledat).items())
     [(0, 3), (1, 3), (2, 2), (3, 1), (4, 2), (5, 0), (6, 2)]
     """
-    dmap = dict([])
+    dmap: Dict[T, int] = dict([])
     for i in list(getNodes(edges)):
         _getDepth2(edges, dmap, i)
     return dmap
 
 
-def pairs(edges):
+def pairs(edges: Edges[T]) -> List[Tuple[T, T]]:
     r = []
     for i in edges.items():
         for child in list(i[1]):
             r.append((child, i[0]))
     return r
 
-def reverseEdges(edges):
+def reverseEdges(edges: Edges[T]) -> Edges[T]:
     """
     | Reverse the directions of edges
     >>> reverseEdges(sampledat)
@@ -204,7 +216,7 @@ def reverseEdges(edges):
     m = map(lambda x: (x[0][0], set(map(lambda y: y[1], x))), g)
     return dict(m)
 
-def getDepthGroup2(labels, edges):
+def getDepthGroup2(labels: Labels[T], edges: Edges[T]) -> DepthGroup[T]:
     """
     >>> getDepthGroup2(samplelabels,sampledat)
     {0: [5], 1: [3], 2: [2, 4, 6], 3: [0, 1]}
@@ -227,12 +239,12 @@ def getDepthGroup2(labels, edges):
     m = map(lambda x: (x[0][0], _sort(set(map(lambda y: y[1], x)))), g)
     return dict(m)
 
-def getNodeDepth(dg):
+def getNodeDepth(dg: DepthGroup[T]) -> NodeDepth[T]:
     d2n = dg.items()
     n2d = map(lambda x: list(map(lambda node: (node, x[0]), x[1])), d2n)
-    return dict(sum(list(n2d), []))
+    return dict(concat(list(n2d)))
 
-def moveOne(nodes):
+def moveOne(nodes: List[Tuple[T, int, int]]) -> List[Tuple[Tuple[T, int, int], List[Tuple[Symbol, int]]]]:
     """
     Move nodes to next step
     >>> moveOne([(0,0,4)])
@@ -252,7 +264,7 @@ def moveOne(nodes):
                 r.append(((n, c, g), [(SHold, c)]))
     return r
 
-def takeNode(c, nodes):
+def takeNode(c: int, nodes: List[Tuple[Tuple[T, int, int], List[Tuple[Symbol, int]]]]) -> Optional[Tuple[Tuple[T, int, int], List[Tuple[Symbol, int]]]]:
     for i in nodes:
         for j in i[1]:
             if j[1] == c:
@@ -279,11 +291,11 @@ def _moveLeft(nodes):
             n0 = takeNode(c, nodes)
             n1 = takeNode(c-1, nodes)
             if n0 is None and n1 is None:
-                r.append(((n, c-2, g), sum([[(SLMove, c-1), (SLMove, c)], syms], [])))
+                r.append(((n, c-2, g), concat([[(SLMove, c-1), (SLMove, c)], syms])))
             elif n0 is None and n1 is not None:
                 g_ = n1[0][2]
                 if g_ == g:
-                    r.append(((n, c-2, g), sum([[(SLMove, c)], syms], [])))
+                    r.append(((n, c-2, g), concat([[(SLMove, c)], syms])))
                 else:
                     r.append(nn)
             else:
@@ -333,7 +345,7 @@ def moveAll(nodes, buf):
         nn = moveLeft(moveOne(nodes))
         nf = list(map(lambda x: x[0], nn))
         ns = list(map(lambda x: x[1], nn))
-        return moveAll(nf, sum([buf, [sum(ns, [])]], []))
+        return moveAll(nf, concat([buf, [sum(ns, [])]]))
 
 
 
@@ -394,7 +406,7 @@ def nodeWithSpace(labels, lst):
     (nodes, skipnodes) = lst
     a = map(lambda x: (SNode(lstr(labels, x[0])), x[1]), nodes)
     b = map(lambda x: (SHold, x[1]), skipnodes)
-    return withSpace(sum([list(a), list(b)], []))
+    return withSpace(concat([list(a), list(b)]))
 
 def __addBypassNode(d, edges, nd, dg):
     """
@@ -565,7 +577,7 @@ def addDest(edges, cur, nxt):
                         break
                     ii = ii + 1
         i = i + 1
-    return (sum([n2n, n2s], []), sum([s2n, s2s], []))
+    return (concat([n2n, n2s]), concat([s2n, s2s]))
 
 def addDestWithBypass(edges, dg):
     """
@@ -594,7 +606,7 @@ def addDestWithBypass(edges, dg):
             r.append((d, (r0, r1)))
     return dict(r)
 
-def addNode(edges, nd, dg):
+def addNode(edges: Edges[T], nd: NodeDepth[T], dg: DepthGroup[T]) -> DepthGroupWithDest[T]:
     """
     | Grouping the nodes by the depth
     >>> edges = mkEdges([(0,[1,2])])
@@ -607,16 +619,16 @@ def addNode(edges, nd, dg):
     """
     return addDestWithBypass(edges, addBypassNode(edges, nd, dg))
 
-def toSymbol(labels, dg):
+def toSymbol(labels: Labels[T], dg: DepthGroupWithDest[T]) -> List[List[Symbol]]:
     r = []
     for d in range(maxDepth(dg), -1, -1):
         (n, s) = dg[d]
         r.append(nodeWithSpace(labels, (n, s)))
-        for i in moveAllWithSpace(sum([n, s], [])):
+        for i in moveAllWithSpace(concat([n, s])):
             r.append(i)
     return r
 
-def edgesToText(labels, edges):
+def edgesToText(labels: Labels[T], edges: Edges[T]) -> str:
     dg = getDepthGroup2(labels, edges)
     nd = getNodeDepth(dg)
     r = toSymbol(labels, addNode(edges, nd, dg))
@@ -694,7 +706,7 @@ def renderToText(list_of_symbols: List[List[Symbol]]) -> str:
     return r
 
 
-def getLongestCommonPrefix(strs):
+def getLongestCommonPrefix(strs: List[str]) -> str:
     """
     >>> getLongestCommonPrefix(["abc_aaa","abc_bb","abc_aaaa"])
     'abc_'
