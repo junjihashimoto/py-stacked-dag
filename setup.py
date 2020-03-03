@@ -14,5 +14,5 @@ setup(
   install_requires = [
     'pydot'
   ],
-  scripts=['bin/stackeddag.py']
+  scripts=['bin/stackeddag']
 )
