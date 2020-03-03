@@ -43,7 +43,7 @@ digraph graphname {
 Show ascii DAG by following command.
 
 ```
-$ python stackeddag.py sample.dot
+$ python stackeddag sample.dot
 o o    l0,l4
 |/
 o    l1
@@ -80,7 +80,7 @@ o    c
 # Another sample
 
 ```
-$ python stackeddag.py sample/test.dot
+$ python stackeddag sample/test.dot
 o
 |
 o
