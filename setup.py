@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
   name = "stackeddag",
-  version = "0.3.2",
+  version = "0.3.3",
   description = 'A visualization tool to show a ascii graph from Graphviz-Dot-file or Tensorflow',
   long_description = open('README').read(),
   license = 'MIT',
